@@ -98,40 +98,7 @@ jobs:
             dist/*.rpm
             dist/*.tar.gz
             dist/*.AppImage
-          retention-days: 30
-
-      - name: Send Slack Message Failed
-        if: ${{ failure() }}
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: "https://hooks.slack.com/services/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"
-          SLACK_USERNAME: "GitHub Actions"
-          SLACK_COLOR: danger
-          SLACK_TITLE: "Build Failed for ${{ github.repository }} on ${{ matrix.os }}"
-          SLACK_MESSAGE: "Build Failed for ${{ github.repository }} on ${{ matrix.os }} with commit message - ${{ github.event.head_commit.message }}"
-          SLACK_FOOTER: "Neulink Github Actions"
-
-      - name: Send Slack Message Cancelled
-        if: ${{ cancelled() }}
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: "https://hooks.slack.com/services/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"
-          SLACK_USERNAME: "GitHub Actions"
-          SLACK_COLOR: warning
-          SLACK_TITLE: "Build Cancelled for ${{ github.repository }} on ${{ matrix.os }}"
-          SLACK_MESSAGE: "Build Cancelled for ${{ github.repository }} on ${{ matrix.os }} with commit message - ${{ github.event.head_commit.message }}"
-          SLACK_FOOTER: "Neulink Github Actions"
-
-      - name: Send Slack Message Success
-        if: ${{ success() }}
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: "https://hooks.slack.com/services/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"
-          SLACK_USERNAME: "GitHub Actions"
-          SLACK_COLOR: good
-          SLACK_TITLE: "Build Successful for ${{ github.repository }} on ${{ matrix.os }}"
-          SLACK_MESSAGE: "Build Successful for ${{ github.repository }} on ${{ matrix.os }} with commit message - ${{ github.event.head_commit.message }}"
-          SLACK_FOOTER: "Neulink Github Actions"
+          retention-days: 90
 
   create-release:
     needs: build
