@@ -1,0 +1,229 @@
+name: Build and Release Electron App
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    types: [closed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+  id-token: write
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  build:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.14.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Electron app (macOS)
+        if: matrix.os == 'macos-latest'
+        run: pnpm run build:mac
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Build Electron app (Windows)
+        if: matrix.os == 'windows-latest'
+        run: pnpm run build:win
+
+      - name: Build Electron app (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: pnpm run build:linux
+
+      - name: Upload artifacts (macOS)
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-app
+          path: |
+            dist/*.dmg
+            dist/*.zip
+          retention-days: 30
+
+      - name: Upload artifacts (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-app
+          path: |
+            dist/*.exe
+            dist/*.msi
+          retention-days: 30
+
+      - name: Upload artifacts (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-app
+          path: |
+            dist/*.deb
+            dist/*.rpm
+            dist/*.tar.gz
+            dist/*.AppImage
+          retention-days: 30
+
+  create-release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Get version from package.json
+        id: get_version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if release exists
+        id: check_release
+        run: |
+          TAG="v${{ steps.get_version.outputs.version }}"
+          echo "Checking if release $TAG exists..."
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Release $TAG already exists, will delete and recreate it"
+            echo "exists=true" >> $GITHUB_OUTPUT
+            gh release delete "$TAG" --yes --cleanup-tag
+          else
+            echo "Release $TAG does not exist, will create new one"
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete existing release if it exists
+        if: steps.check_release.outputs.exists == 'true'
+        run: |
+          echo "Previous release deletion completed in check step"
+
+      - name: Create Release with GitHub CLI
+        id: create_release_cli
+        continue-on-error: true
+        run: |
+          TAG="v${{ steps.get_version.outputs.version }}"
+          RELEASE_NAME="Neulink Pharmacy v${{ steps.get_version.outputs.version }}"
+          
+          echo "Creating release $TAG with GitHub CLI..."
+          gh release create "$TAG" \
+            --title "$RELEASE_NAME" \
+            --notes "## 🚀 Neulink Pharmacy v${{ steps.get_version.outputs.version }}
+          
+          ### 📦 Downloads
+          
+          Choose the appropriate installer for your platform:
+          
+          **macOS**
+          - \`.dmg\` - Standard macOS installer
+          - \`.zip\` - Portable application archive
+          
+          **Windows** 
+          - \`.exe\` - Windows installer
+          - \`.msi\` - MSI installer package
+          
+          **Linux**
+          - \`.deb\` - Debian/Ubuntu package
+          - \`.rpm\` - Red Hat/CentOS package  
+          - \`.AppImage\` - Universal Linux executable
+          - \`.tar.gz\` - Portable archive
+          
+          ### 🔄 Changes
+          This release includes the latest changes from the main branch.
+          
+          ### 💡 Installation Notes
+          - **macOS**: You may need to right-click and select \"Open\" for the first launch (unsigned app)
+          - **Windows**: Windows Defender may show a warning (unsigned app)
+          - **Linux**: Make sure to mark AppImage as executable: \`chmod +x *.AppImage\`
+          
+          ---
+          *Generated automatically by GitHub Actions*" \
+            ./artifacts/macos-app/* \
+            ./artifacts/windows-app/* \
+            ./artifacts/linux-app/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fallback Release Creation
+        if: steps.create_release_cli.outcome == 'failure'
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.get_version.outputs.version }}
+          name: Neulink Pharmacy v${{ steps.get_version.outputs.version }}
+          body: |
+            ## 🚀 Neulink Pharmacy v${{ steps.get_version.outputs.version }}
+            
+            ### 📦 Downloads
+            
+            Choose the appropriate installer for your platform:
+            
+            **macOS**
+            - `.dmg` - Standard macOS installer
+            - `.zip` - Portable application archive
+            
+            **Windows** 
+            - `.exe` - Windows installer
+            - `.msi` - MSI installer package
+            
+            **Linux**
+            - `.deb` - Debian/Ubuntu package
+            - `.rpm` - Red Hat/CentOS package  
+            - `.AppImage` - Universal Linux executable
+            - `.tar.gz` - Portable archive
+            
+            ### 🔄 Changes
+            This release includes the latest changes from the main branch with automatic version incrementation.
+            
+            ### 💡 Installation Notes
+            - **macOS**: You may need to right-click and select "Open" for the first launch (unsigned app)
+            - **Windows**: Windows Defender may show a warning (unsigned app)
+            - **Linux**: Make sure to mark AppImage as executable: `chmod +x *.AppImage`
+            
+            ---
+            *Generated automatically by GitHub Actions*
+          draft: false
+          prerelease: false
+          files: |
+            ./artifacts/macos-app/*
+            ./artifacts/windows-app/*
+            ./artifacts/linux-app/*
