@@ -46,6 +46,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Setup Windows Build Environment
+        if: matrix.os == 'windows-latest'
+        run: |
+          # Ensure clean build directory
+          if (Test-Path dist) { Remove-Item -Recurse -Force dist }
+        shell: powershell
+
       - name: Build Electron app (macOS)
         if: matrix.os == 'macos-latest'
         run: pnpm run build:mac
@@ -55,6 +62,8 @@ jobs:
       - name: Build Electron app (Windows)
         if: matrix.os == 'windows-latest'
         run: pnpm run build:win
+        env:
+          DEBUG: electron-builder
 
       - name: Build Electron app (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
@@ -77,7 +86,6 @@ jobs:
           name: windows-app
           path: |
             dist/*.exe
-            dist/*.msi
           retention-days: 30
 
       - name: Upload artifacts (Linux)
@@ -190,8 +198,7 @@ jobs:
           - \`.zip\` - Portable application archive
           
           **Windows** 
-          - \`.exe\` - Windows installer
-          - \`.msi\` - MSI installer package
+          - \`.exe\` - Windows installer (NSIS)
           
           **Linux**
           - \`.deb\` - Debian/Ubuntu package
@@ -235,8 +242,7 @@ jobs:
             - `.zip` - Portable application archive
             
             **Windows** 
-            - `.exe` - Windows installer
-            - `.msi` - MSI installer package
+            - `.exe` - Windows installer (NSIS)
             
             **Linux**
             - `.deb` - Debian/Ubuntu package
