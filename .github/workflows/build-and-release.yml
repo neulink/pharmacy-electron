@@ -92,6 +92,39 @@ jobs:
             dist/*.AppImage
           retention-days: 30
 
+      - name: Send Slack Message Failed
+        if: ${{ failure() }}
+        uses: rtCamp/action-slack-notify@v2.3.1
+        env:
+          SLACK_WEBHOOK: "https://hooks.slack.com/services/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"
+          SLACK_USERNAME: "GitHub Actions"
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_TITLE: "Build Failed for ${{ github.repository }} on ${{ matrix.os }}"
+          SLACK_MESSAGE: "Build Failed for ${{ github.repository }} on ${{ matrix.os }} with commit message - ${{ github.event.head_commit.message }}"
+          SLACK_FOOTER: "Neulink Github Actions"
+
+      - name: Send Slack Message Cancelled
+        if: ${{ cancelled() }}
+        uses: rtCamp/action-slack-notify@v2.3.1
+        env:
+          SLACK_WEBHOOK: "https://hooks.slack.com/services/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"
+          SLACK_USERNAME: "GitHub Actions"
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_TITLE: "Build Cancelled for ${{ github.repository }} on ${{ matrix.os }}"
+          SLACK_MESSAGE: "Build Cancelled for ${{ github.repository }} on ${{ matrix.os }} with commit message - ${{ github.event.head_commit.message }}"
+          SLACK_FOOTER: "Neulink Github Actions"
+
+      - name: Send Slack Message Success
+        if: ${{ success() }}
+        uses: rtCamp/action-slack-notify@v2.3.1
+        env:
+          SLACK_WEBHOOK: "https://hooks.slack.com/services/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"
+          SLACK_USERNAME: "GitHub Actions"
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_TITLE: "Build Successful for ${{ github.repository }} on ${{ matrix.os }}"
+          SLACK_MESSAGE: "Build Successful for ${{ github.repository }} on ${{ matrix.os }} with commit message - ${{ github.event.head_commit.message }}"
+          SLACK_FOOTER: "Neulink Github Actions"
+
   create-release:
     needs: build
     runs-on: ubuntu-latest
@@ -227,3 +260,54 @@ jobs:
             ./artifacts/macos-app/*
             ./artifacts/windows-app/*
             ./artifacts/linux-app/*
+
+      - name: Send Slack Message Release Failed
+        if: ${{ failure() }}
+        uses: rtCamp/action-slack-notify@v2.3.1
+        env:
+          SLACK_WEBHOOK: "https://hooks.slack.com/services/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"
+          SLACK_USERNAME: "GitHub Actions"
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_TITLE: "Release Failed for ${{ github.repository }}"
+          SLACK_MESSAGE: "Release Failed for ${{ github.repository }} version ${{ steps.get_version.outputs.version }} with commit message - ${{ github.event.head_commit.message }}"
+          SLACK_FOOTER: "Neulink Github Actions"
+
+      - name: Send Slack Message Release Cancelled
+        if: ${{ cancelled() }}
+        uses: rtCamp/action-slack-notify@v2.3.1
+        env:
+          SLACK_WEBHOOK: "https://hooks.slack.com/services/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"
+          SLACK_USERNAME: "GitHub Actions"
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_TITLE: "Release Cancelled for ${{ github.repository }}"
+          SLACK_MESSAGE: "Release Cancelled for ${{ github.repository }} version ${{ steps.get_version.outputs.version }} with commit message - ${{ github.event.head_commit.message }}"
+          SLACK_FOOTER: "Neulink Github Actions"
+
+      - name: Send Slack Message Release Success
+        if: ${{ success() }}
+        uses: rtCamp/action-slack-notify@v2.3.1
+        env:
+          SLACK_WEBHOOK: "https://hooks.slack.com/services/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"
+          SLACK_USERNAME: "GitHub Actions"
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_TITLE: "🎉 Release Successful for ${{ github.repository }}"
+          SLACK_MESSAGE: "🚀 New release v${{ steps.get_version.outputs.version }} created successfully for ${{ github.repository }}! Download at: https://github.com/${{ github.repository }}/releases/tag/v${{ steps.get_version.outputs.version }}"
+          SLACK_FOOTER: "Neulink Github Actions"
+
+  notify-push:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Send Slack Message Push Notification
+        uses: rtCamp/action-slack-notify@v2.3.1
+        env:
+          SLACK_WEBHOOK: "https://hooks.slack.com/services/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"
+          SLACK_USERNAME: "GitHub Actions"
+          SLACK_COLOR: "good"
+          SLACK_TITLE: "📝 New push to main branch in ${{ github.repository }}"
+          SLACK_MESSAGE: "New commit pushed to main branch: \"${{ github.event.head_commit.message }}\" by ${{ github.actor }}"
+          SLACK_FOOTER: "Neulink Github Actions"

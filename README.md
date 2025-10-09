@@ -17,6 +17,7 @@ A cross-platform Electron wrapper for the Neulink Pharmacy web application.
 
 - Node.js 18+ 
 - pnpm (recommended) or npm
+- Windows, macOS, or Linux operating system
 
 ### Setup
 
@@ -35,6 +36,8 @@ pnpm run dev
 pnpm start
 ```
 
+**Note**: All scripts use `cross-env` for cross-platform compatibility, ensuring they work on Windows, macOS, and Linux.
+
 ### Building
 
 ```bash
@@ -52,20 +55,32 @@ pnpm run pack
 
 ## Deployment
 
-The application is automatically built and released via GitHub Actions when changes are pushed to the `main` branch.
+The application is automatically built and released via GitHub Actions when changes are pushed to the `main` branch. Slack notifications are sent for all build events.
 
 ### Release Process
 
 1. Update version in `package.json`
 2. Push to `main` branch
 3. GitHub Actions will automatically:
+   - Send Slack notification about the push
    - Build for Windows, macOS, and Linux
    - Create GitHub release with all platform binaries
    - Upload artifacts as release assets
+   - Send Slack notifications for build status (success/failure/cancelled)
+   - Send Slack notification when release is created
 
 ### Manual Release
 
 You can also trigger a manual release by going to the Actions tab and running the "Build and Release Electron App" workflow.
+
+### Slack Notifications
+
+The workflow sends Slack notifications for:
+- **Push events**: When code is pushed to main branch
+- **Build status**: Success, failure, or cancellation for each platform
+- **Release status**: When releases are created, fail, or are cancelled
+
+All notifications are sent to the configured Slack webhook.
 
 ## Security
 

@@ -6,13 +6,13 @@
   "homepage": "./",
   "scripts": {
     "start": "electron .",
-    "dev": "NODE_ENV=development electron .",
-    "build": "NODE_ENV=production electron-builder",
-    "build:win": "NODE_ENV=production electron-builder --win",
-    "build:mac": "NODE_ENV=production electron-builder --mac",
-    "build:linux": "NODE_ENV=production electron-builder --linux",
+    "dev": "cross-env NODE_ENV=development electron .",
+    "build": "cross-env NODE_ENV=production electron-builder",
+    "build:win": "cross-env NODE_ENV=production electron-builder --win",
+    "build:mac": "cross-env NODE_ENV=production electron-builder --mac",
+    "build:linux": "cross-env NODE_ENV=production electron-builder --linux",
     "dist": "npm run build",
-    "pack": "NODE_ENV=production electron-builder --dir",
+    "pack": "cross-env NODE_ENV=production electron-builder --dir",
     "postinstall": "electron-builder install-app-deps"
   },
   "keywords": ["neulink", "pharmacy", "electron", "desktop"],
@@ -20,6 +20,7 @@
   "license": "MIT",
   "packageManager": "pnpm@10.14.0",
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "electron": "^38.2.2",
     "electron-builder": "^25.1.8"
   },
