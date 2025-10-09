@@ -7,10 +7,13 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Fetch release info
+      - name: Fetch release info from private repo
+        env:
+          GH_TOKEN: ${{ secrets.NEULINK_SYNC_TOKEN }}
         run: |
-          curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
+          curl -s -H "Authorization: token $GH_TOKEN" \
                -H "Accept: application/vnd.github+json" \
                https://api.github.com/repos/neulink/pharmacy-electron/releases \
                -o releases.json
@@ -25,9 +28,10 @@ jobs:
       - name: Push downloads.json to website repo
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
-          API_TOKEN_GITHUB: ${{ secrets.GH_TOKEN }}
+          API_TOKEN_GITHUB: ${{ secrets.NEULINK_SYNC_TOKEN }}
         with:
           source_file: 'downloads.json'
           destination_repo: 'charan9999/neulink-reimagine-web'
           destination_folder: 'public'
+          destination_branch: 'main'
           commit_message: 'Auto-update downloads.json from Neulink release'
