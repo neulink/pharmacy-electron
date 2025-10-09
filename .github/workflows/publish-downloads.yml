@@ -1,0 +1,33 @@
+name: Publish Downloads to Website
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch release info
+        run: |
+          curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
+               -H "Accept: application/vnd.github+json" \
+               https://api.github.com/repos/neulink/pharmacy-electron/releases \
+               -o releases.json
+
+          jq '[.[] | {
+            tag: .tag_name,
+            name: .name,
+            published_at: .published_at,
+            assets: [.assets[] | {name: .name, download_url: .browser_download_url}]
+          }]' releases.json > downloads.json
+
+      - name: Push downloads.json to website repo
+        uses: dmnemec/copy_file_to_another_repo_action@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.GH_TOKEN }}
+        with:
+          source_file: 'downloads.json'
+          destination_repo: 'charan9999/neulink-reimagine-web'
+          destination_folder: 'public'
+          commit_message: 'Auto-update downloads.json from Neulink release'
