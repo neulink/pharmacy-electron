@@ -90,6 +90,14 @@ All notifications are sent to the configured Slack webhook.
 - Right-click context menu disabled in production
 - Keyboard shortcuts for dev tools blocked
 
+## Linux Package Information
+
+The Linux builds include proper package metadata:
+- **Maintainer**: rishi@neulink.cloud
+- **Vendor**: Neulink
+- **Category**: Office applications
+- **Desktop Integration**: Proper .desktop file with keywords and description
+
 ## Project Structure
 
 ```

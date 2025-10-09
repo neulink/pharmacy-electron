@@ -16,7 +16,10 @@
     "postinstall": "electron-builder install-app-deps"
   },
   "keywords": ["neulink", "pharmacy", "electron", "desktop"],
-  "author": "Neulink",
+  "author": {
+    "name": "Neulink",
+    "email": "rishi@neulink.cloud"
+  },
   "license": "MIT",
   "packageManager": "pnpm@10.14.0",
   "devDependencies": {
@@ -83,7 +86,17 @@
         }
       ],
       "category": "Office",
-      "icon": "assets/icon.png"
+      "icon": "assets/icon.png",
+      "maintainer": "rishi@neulink.cloud",
+      "vendor": "Neulink",
+      "synopsis": "Neulink Pharmacy Desktop Application",
+      "description": "A cross-platform desktop application for Neulink Pharmacy management system",
+      "desktop": {
+        "Name": "Neulink Pharmacy",
+        "Comment": "Pharmacy Management System",
+        "Keywords": "pharmacy;medical;neulink;management;",
+        "Category": "Office"
+      }
     },
     "nsis": {
       "oneClick": false,
