@@ -58,16 +58,20 @@ jobs:
         run: pnpm run build:mac
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Electron app (Windows)
         if: matrix.os == 'windows-latest'
         run: pnpm run build:win
         env:
           DEBUG: electron-builder
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Electron app (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: pnpm run build:linux
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload artifacts (macOS)
         if: matrix.os == 'macos-latest'
@@ -77,7 +81,8 @@ jobs:
           path: |
             dist/*.dmg
             dist/*.zip
-          retention-days: 90
+            dist/latest-mac.yml
+          retention-days: 30
 
       - name: Upload artifacts (Windows)
         if: matrix.os == 'windows-latest'
@@ -86,7 +91,8 @@ jobs:
           name: windows-app
           path: |
             dist/*.exe
-          retention-days: 90
+            dist/latest.yml
+          retention-days: 30
 
       - name: Upload artifacts (Linux)
         if: matrix.os == 'ubuntu-latest'
@@ -98,7 +104,8 @@ jobs:
             dist/*.rpm
             dist/*.tar.gz
             dist/*.AppImage
-          retention-days: 90
+            dist/latest-linux.yml
+          retention-days: 30
 
   create-release:
     needs: build
@@ -176,6 +183,21 @@ jobs:
           ### 🔄 Changes
           This release includes the latest changes from the main branch.
           
+          ### ⚡ Auto-Update Feature
+          - The app now supports automatic updates! 
+          - Updates are checked automatically every 4 hours when the app is running
+          - You can also manually check for updates via File → Check for Updates
+          - You'll be prompted before any downloads, and can choose when to install
+          
+          ### 🖨️ QZ-Tray Integration
+          - **Integrated QZ-Tray** for direct printer access
+          - **Remote download** - always gets latest QZ-Tray version
+          - **Smart caching** - downloads only once per version  
+          - **Smaller installers** - no bundled QZ-Tray files (~150MB savings)
+          - **Perfect for pharmacy printing**: prescriptions, labels, receipts
+          - **Background service** starts automatically with the app
+          - **Manual controls** available in File menu
+          
           ### 💡 Installation Notes
           - **macOS**: You may need to right-click and select \"Open\" for the first launch (unsigned app)
           - **Windows**: Windows Defender may show a warning (unsigned app)
@@ -219,6 +241,21 @@ jobs:
             
             ### 🔄 Changes
             This release includes the latest changes from the main branch with automatic version incrementation.
+            
+            ### ⚡ Auto-Update Feature
+            - The app now supports automatic updates! 
+            - Updates are checked automatically every 4 hours when the app is running
+            - You can also manually check for updates via File → Check for Updates
+            - You'll be prompted before any downloads, and can choose when to install
+            
+            ### 🖨️ QZ-Tray Integration
+            - **Integrated QZ-Tray** for direct printer access
+            - **Remote download** - always gets latest QZ-Tray version
+            - **Smart caching** - downloads only once per version
+            - **Smaller installers** - no bundled QZ-Tray files (~150MB savings)
+            - **Perfect for pharmacy printing**: prescriptions, labels, receipts
+            - **Background service** starts automatically with the app
+            - **Manual controls** available in File menu
             
             ### 💡 Installation Notes
             - **macOS**: You may need to right-click and select "Open" for the first launch (unsigned app)

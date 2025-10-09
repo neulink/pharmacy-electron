@@ -19,6 +19,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // QZ-Tray specific helpers for Electron environment
     isElectron: true,
     
+    // QZ-Tray connection helper
+    getQZTrayStatus: () => ipcRenderer.invoke('qz-tray-status'),
+    restartQZTray: () => ipcRenderer.invoke('qz-tray-restart'),
+    
+    // QZ-Tray connection info for web page
+    qzTray: {
+        websocketUrl: 'ws://localhost:8181',
+        isAvailable: true // Will be updated based on actual status
+    },
+    
     // Printing helpers
     print: () => ipcRenderer.invoke('print-window'),
     

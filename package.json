@@ -1,6 +1,6 @@
 {
   "name": "pharmacy-electron",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "description": "Neulink Pharmacy Desktop Application",
   "main": "main.cjs",
   "homepage": "./",
@@ -11,14 +11,24 @@
     "build:win": "cross-env NODE_ENV=production electron-builder --win",
     "build:mac": "cross-env NODE_ENV=production electron-builder --mac",
     "build:linux": "cross-env NODE_ENV=production electron-builder --linux",
+    "build:publish": "cross-env NODE_ENV=production electron-builder --publish=always",
     "dist": "npm run build",
     "pack": "cross-env NODE_ENV=production electron-builder --dir",
     "postinstall": "electron-builder install-app-deps"
   },
-  "keywords": ["neulink", "pharmacy", "electron", "desktop"],
+  "keywords": [
+    "neulink",
+    "pharmacy",
+    "electron",
+    "desktop"
+  ],
   "author": {
     "name": "Neulink",
     "email": "rishi@neulink.cloud"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neulink/pharmacy-electron.git"
   },
   "license": "MIT",
   "packageManager": "pnpm@10.14.0",
@@ -36,21 +46,33 @@
     "files": [
       "main.cjs",
       "preload.cjs",
+      "qz-tray-manager.cjs",
       "package.json"
     ],
     "extraMetadata": {
       "main": "main.cjs"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "neulink",
+      "repo": "pharmacy-electron"
     },
     "mac": {
       "category": "public.app-category.medical",
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         },
         {
           "target": "zip",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ],
       "icon": "assets/icon.icns",
@@ -60,7 +82,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "assets/icon.ico",
@@ -70,19 +94,27 @@
       "target": [
         {
           "target": "AppImage",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "deb",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "rpm",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "tar.gz",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "category": "Office",
@@ -109,5 +141,9 @@
       "installerIcon": "assets/icon.ico",
       "uninstallerIcon": "assets/icon.ico"
     }
+  },
+  "dependencies": {
+    "electron-updater": "^6.6.2",
+    "ws": "^8.18.3"
   }
 }
