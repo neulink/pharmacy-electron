@@ -1,7 +1,6 @@
 name: Publish Downloads to Website
 
 on:
-  workflow_dispatch:
   release:
     types: [published]
 
@@ -11,40 +10,27 @@ jobs:
 
     steps:
       - name: Prepare environment
-        run: |
-          set -euo pipefail
-          sudo apt-get update -y
-          sudo apt-get install -y jq
+        run: sudo apt-get install -y jq
 
       - name: Fetch latest release info
         env:
           GH_TOKEN: ${{ secrets.NEULINK_SYNC_TOKEN }}
         run: |
-          set -euo pipefail
           echo "Fetching latest release..."
-          curl -sS -H "Authorization: token $GH_TOKEN" \
+          curl -s -H "Authorization: token $GH_TOKEN" \
                -H "Accept: application/vnd.github+json" \
                https://api.github.com/repos/neulink/pharmacy-electron/releases/latest \
                -o release.json
 
-          # Safely handle missing/empty .assets
           jq '[{
             tag: .tag_name,
             name: .name,
             published_at: .published_at,
-            assets: ((.assets // []) | map({name: .name, download_url: .browser_download_url}))
+            assets: [.assets[] | {name: .name, download_url: .browser_download_url}]
           }]' release.json > downloads.json
 
       - name: Validate JSON
-        run: |
-          set -euo pipefail
-          if jq empty downloads.json >/dev/null 2>&1; then
-            echo "✅ downloads.json is valid"
-          else
-            echo "❌ Invalid JSON"
-            cat downloads.json || true
-            exit 1
-          fi
+        run: jq empty downloads.json && echo "✅ downloads.json is valid"
 
       - name: Push downloads.json to website repo
         uses: dmnemec/copy_file_to_another_repo_action@main
@@ -56,16 +42,3 @@ jobs:
           destination_folder: 'public'
           destination_branch: 'main'
           commit_message: 'Auto-update downloads.json from Neulink release'
-
-      - name: Trigger Firebase Deploy in Website Repo
-        env:
-          GH_TOKEN: ${{ secrets.NEULINK_SYNC_TOKEN }}
-        run: |
-          set -euo pipefail
-          echo "Triggering deploy workflow in website repo..."
-          curl -sS -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: token $GH_TOKEN" \
-            https://api.github.com/repos/charan9999/neulink-reimagine-web/actions/workflows/firebase-deploy.yml/dispatches \
-            -d '{"ref":"main"}'

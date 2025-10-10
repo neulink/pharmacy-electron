@@ -23,7 +23,7 @@ jobs:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     strategy:
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        os: [macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -66,12 +66,6 @@ jobs:
           DEBUG: electron-builder
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Electron app (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: pnpm run build:linux
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Upload artifacts (macOS)
         if: matrix.os == 'macos-latest'
         uses: actions/upload-artifact@v4
@@ -91,19 +85,6 @@ jobs:
           path: |
             dist/*.exe
             dist/latest.yml
-          retention-days: 30
-
-      - name: Upload artifacts (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-app
-          path: |
-            dist/*.deb
-            dist/*.rpm
-            dist/*.tar.gz
-            dist/*.AppImage
-            dist/latest-linux.yml
           retention-days: 30
 
   create-release:
@@ -156,8 +137,7 @@ jobs:
             --title "$RELEASE_NAME" \
             --notes "Automated build release for Neulink Pharmacy v${{ steps.get_version.outputs.version }}" \
             ./artifacts/macos-app/* \
-            ./artifacts/windows-app/* \
-            ./artifacts/linux-app/*
+            ./artifacts/windows-app/*  # Removed ./artifacts/linux-app/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -172,8 +152,7 @@ jobs:
           body: Automated fallback release.
           files: |
             ./artifacts/macos-app/*
-            ./artifacts/windows-app/*
-            ./artifacts/linux-app/*
+            ./artifacts/windows-app/*  # Removed ./artifacts/linux-app/*
 
       - name: Notify Slack (Success)
         if: ${{ success() }}
