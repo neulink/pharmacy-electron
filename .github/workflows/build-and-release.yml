@@ -25,7 +25,7 @@ jobs:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
-      
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -49,7 +49,6 @@ jobs:
       - name: Setup Windows Build Environment
         if: matrix.os == 'windows-latest'
         run: |
-          # Ensure clean build directory
           if (Test-Path dist) { Remove-Item -Recurse -Force dist }
         shell: powershell
 
@@ -67,7 +66,7 @@ jobs:
           DEBUG: electron-builder
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Electron app (Ubuntu)
+      - name: Build Electron app (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: pnpm run build:linux
         env:
@@ -111,7 +110,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -136,82 +135,33 @@ jobs:
           TAG="v${{ steps.get_version.outputs.version }}"
           echo "Checking if release $TAG exists..."
           if gh release view "$TAG" > /dev/null 2>&1; then
-            echo "Release $TAG already exists, will delete and recreate it"
+            echo "Release $TAG already exists, deleting and recreating"
             echo "exists=true" >> $GITHUB_OUTPUT
             gh release delete "$TAG" --yes --cleanup-tag
           else
-            echo "Release $TAG does not exist, will create new one"
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Delete existing release if it exists
-        if: steps.check_release.outputs.exists == 'true'
-        run: |
-          echo "Previous release deletion completed in check step"
-
-      - name: Create Release with GitHub CLI
+      - name: Create GitHub Release
         id: create_release_cli
         continue-on-error: true
         run: |
           TAG="v${{ steps.get_version.outputs.version }}"
           RELEASE_NAME="Neulink Pharmacy v${{ steps.get_version.outputs.version }}"
-          
-          echo "Creating release $TAG with GitHub CLI..."
+
+          echo "Creating release $TAG..."
           gh release create "$TAG" \
             --title "$RELEASE_NAME" \
-            --notes "## 🚀 Neulink Pharmacy v${{ steps.get_version.outputs.version }}
-          
-          ### 📦 Downloads
-          
-          Choose the appropriate installer for your platform:
-          
-          **macOS**
-          - \`.dmg\` - Standard macOS installer
-          - \`.zip\` - Portable application archive
-          
-          **Windows** 
-          - \`.exe\` - Windows installer (NSIS)
-          
-          **Linux**
-          - \`.deb\` - Debian/Ubuntu package
-          - \`.rpm\` - Red Hat/CentOS package  
-          - \`.AppImage\` - Universal Linux executable
-          - \`.tar.gz\` - Portable archive
-          
-          ### 🔄 Changes
-          This release includes the latest changes from the main branch.
-          
-          ### ⚡ Auto-Update Feature
-          - The app now supports automatic updates! 
-          - Updates are checked automatically every 4 hours when the app is running
-          - You can also manually check for updates via File → Check for Updates
-          - You'll be prompted before any downloads, and can choose when to install
-          
-          ### 🖨️ QZ-Tray Integration
-          - **Integrated QZ-Tray** for direct printer access
-          - **Remote download** - always gets latest QZ-Tray version
-          - **Smart caching** - downloads only once per version  
-          - **Smaller installers** - no bundled QZ-Tray files (~150MB savings)
-          - **Perfect for pharmacy printing**: prescriptions, labels, receipts
-          - **Background service** starts automatically with the app
-          - **Manual controls** available in File menu
-          
-          ### 💡 Installation Notes
-          - **macOS**: You may need to right-click and select \"Open\" for the first launch (unsigned app)
-          - **Windows**: Windows Defender may show a warning (unsigned app)
-          - **Linux**: Make sure to mark AppImage as executable: \`chmod +x *.AppImage\`
-          
-          ---
-          *Generated automatically by GitHub Actions*" \
+            --notes "Automated build release for Neulink Pharmacy v${{ steps.get_version.outputs.version }}" \
             ./artifacts/macos-app/* \
             ./artifacts/windows-app/* \
             ./artifacts/linux-app/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Fallback Release Creation
+      - name: Fallback Release (Softprops)
         if: steps.create_release_cli.outcome == 'failure'
         uses: softprops/action-gh-release@v2
         env:
@@ -219,81 +169,13 @@ jobs:
         with:
           tag_name: v${{ steps.get_version.outputs.version }}
           name: Neulink Pharmacy v${{ steps.get_version.outputs.version }}
-          body: |
-            ## 🚀 Neulink Pharmacy v${{ steps.get_version.outputs.version }}
-            
-            ### 📦 Downloads
-            
-            Choose the appropriate installer for your platform:
-            
-            **macOS**
-            - `.dmg` - Standard macOS installer
-            - `.zip` - Portable application archive
-            
-            **Windows** 
-            - `.exe` - Windows installer (NSIS)
-            
-            **Linux**
-            - `.deb` - Debian/Ubuntu package
-            - `.rpm` - Red Hat/CentOS package  
-            - `.AppImage` - Universal Linux executable
-            - `.tar.gz` - Portable archive
-            
-            ### 🔄 Changes
-            This release includes the latest changes from the main branch with automatic version incrementation.
-            
-            ### ⚡ Auto-Update Feature
-            - The app now supports automatic updates! 
-            - Updates are checked automatically every 4 hours when the app is running
-            - You can also manually check for updates via File → Check for Updates
-            - You'll be prompted before any downloads, and can choose when to install
-            
-            ### 🖨️ QZ-Tray Integration
-            - **Integrated QZ-Tray** for direct printer access
-            - **Remote download** - always gets latest QZ-Tray version
-            - **Smart caching** - downloads only once per version
-            - **Smaller installers** - no bundled QZ-Tray files (~150MB savings)
-            - **Perfect for pharmacy printing**: prescriptions, labels, receipts
-            - **Background service** starts automatically with the app
-            - **Manual controls** available in File menu
-            
-            ### 💡 Installation Notes
-            - **macOS**: You may need to right-click and select "Open" for the first launch (unsigned app)
-            - **Windows**: Windows Defender may show a warning (unsigned app)
-            - **Linux**: Make sure to mark AppImage as executable: `chmod +x *.AppImage`
-            
-            ---
-            *Generated automatically by GitHub Actions*
-          draft: false
-          prerelease: false
+          body: Automated fallback release.
           files: |
             ./artifacts/macos-app/*
             ./artifacts/windows-app/*
             ./artifacts/linux-app/*
 
-      - name: Send Slack Message Release Failed
-        if: ${{ failure() }}
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: "https://hooks.slack.com/services/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"
-          SLACK_USERNAME: "GitHub Actions"
-          SLACK_COLOR: danger
-          SLACK_TITLE: "Release Failed for ${{ github.repository }}"
-          SLACK_MESSAGE: "Release Failed for ${{ github.repository }} version ${{ steps.get_version.outputs.version }} with commit message - ${{ github.event.head_commit.message }}"
-          SLACK_FOOTER: "Neulink Github Actions"
-
-      - name: Send Slack Message Release Cancelled
-        if: ${{ cancelled() }}
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: "https://hooks.slack.com/services/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"
-          SLACK_USERNAME: "GitHub Actions"
-          SLACK_COLOR: warning
-          SLACK_TITLE: "Release Cancelled for ${{ github.repository }}"
-          SLACK_MESSAGE: "Release Cancelled for ${{ github.repository }} version ${{ steps.get_version.outputs.version }} with commit message - ${{ github.event.head_commit.message }}"
-          SLACK_FOOTER: "Neulink Github Actions"
-
-      - name: Send Slack Message Release Success
+      - name: Notify Slack (Success)
         if: ${{ success() }}
         uses: rtCamp/action-slack-notify@v2
         env:
@@ -301,23 +183,28 @@ jobs:
           SLACK_USERNAME: "GitHub Actions"
           SLACK_COLOR: good
           SLACK_TITLE: "🎉 Release Successful for ${{ github.repository }}"
-          SLACK_MESSAGE: "🚀 New release v${{ steps.get_version.outputs.version }} created successfully for ${{ github.repository }}! Download at: https://github.com/${{ github.repository }}/releases/tag/v${{ steps.get_version.outputs.version }}"
-          SLACK_FOOTER: "Neulink Github Actions"
+          SLACK_MESSAGE: "🚀 New release v${{ steps.get_version.outputs.version }} created successfully for ${{ github.repository }}!"
+          SLACK_FOOTER: "Neulink GitHub Actions"
 
-  notify-push:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Send Slack Message Push Notification
+      - name: Notify Slack (Failure)
+        if: ${{ failure() }}
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: "https://hooks.slack.com/services/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"
           SLACK_USERNAME: "GitHub Actions"
-          SLACK_COLOR: good
-          SLACK_TITLE: "📝 New push to main branch in ${{ github.repository }}"
-          SLACK_MESSAGE: "New commit pushed to main branch: \"${{ github.event.head_commit.message }}\" by ${{ github.actor }}"
-          SLACK_FOOTER: "Neulink Github Actions"
+          SLACK_COLOR: danger
+          SLACK_TITLE: "❌ Release Failed for ${{ github.repository }}"
+          SLACK_MESSAGE: "Release v${{ steps.get_version.outputs.version }} failed during build/release!"
+          SLACK_FOOTER: "Neulink GitHub Actions"
+
+      - name: Trigger Website Sync Workflow
+        if: ${{ success() }}
+        env:
+          GH_TOKEN: ${{ secrets.NEULINK_SYNC_TOKEN }}
+        run: |
+          echo "Triggering website sync workflow..."
+          curl -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: token $GH_TOKEN" \
+            https://api.github.com/repos/neulink/pharmacy-electron/actions/workflows/publish-downloads.yml/dispatches \
+            -d '{"ref":"main"}'
