@@ -158,7 +158,7 @@ jobs:
         if: ${{ success() }}
         uses: rtCamp/action-slack-notify@v2
         env:
-          SLACK_WEBHOOK: "https://hooks.slack.com/services/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"
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_USERNAME: "GitHub Actions"
           SLACK_COLOR: good
           SLACK_TITLE: "🎉 Release Successful for ${{ github.repository }}"
@@ -169,7 +169,7 @@ jobs:
         if: ${{ failure() }}
         uses: rtCamp/action-slack-notify@v2
         env:
-          SLACK_WEBHOOK: "https://hooks.slack.com/services/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"
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_USERNAME: "GitHub Actions"
           SLACK_COLOR: danger
           SLACK_TITLE: "❌ Release Failed for ${{ github.repository }}"
